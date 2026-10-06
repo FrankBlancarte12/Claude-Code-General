@@ -1,0 +1,721 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Detalle de factura · Wind</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400..700&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: Wind app shell (sidebar 88 + barra 56). Contenido en dos columnas: documento (izq.) + dinero (der.: Totales y Datos generales).
+   Tokens: Wind DS (Neutrals, Success, Error, Base, Radius, Spacing, Inter). La única tipografía nueva es mono, solo para lo que lee el SAT. */
+:root {
+  --n-50: #fbfbfb; --n-100: #f8f8f8; --n-200: #efeeeb; --n-300: #dcdcdc; --n-400: #b7b7b7;
+  --n-500: #929292; --n-600: #777777; --n-700: #646161; --n-800: #4b4b4b; --n-900: #343434;
+  --surface: #ffffff;
+  --green-4: #6fcf97; --green-6: #27ae60; --green-text: #1e8e4f; --green-10: #104928; --green-tint: #e3f4e9;
+  --red-6: #eb5757; --red-ink: #b63b3b;
+  --blue-800: #174497; --blue-600: #2266e2; --blue-tint: #deeafe;
+  --brand: #5b62e8; --cream: #f7f0e0; --sun: #f4d36c;
+  --glass: rgba(248, 248, 248, .78);
+  --r-sm: 8px; --r-mdx: 12px; --r-md: 16px; --r-lg: 24px;
+  --font: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  --shadow-xs: 0 1px 2px rgba(52,52,52,.08), 0 1px 3px rgba(52,52,52,.08), 0 8px 5px rgba(52,52,52,.04), 0 14px 5px rgba(52,52,52,.01);
+  color-scheme: light;
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+[hidden] { display: none !important; }
+html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
+body {
+  margin: 0; background: var(--n-100); color: var(--n-900);
+  font: 400 14px/20px var(--font); font-optical-sizing: auto;
+  -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale;
+}
+a { color: inherit; text-decoration: none; }
+button { font: inherit; color: inherit; }
+h1, h2, p { margin: 0; }
+.i { width: 16px; height: 16px; fill: currentColor; flex: none; display: block; }
+.i-10 { width: 10px; height: 10px; } .i-12 { width: 12px; height: 12px; } .i-14 { width: 14px; height: 14px; }
+.num { font-variant-numeric: tabular-nums; }
+.mono { font-family: var(--mono); font-size: 13px; letter-spacing: 0; font-weight: 500; }
+.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+:focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; border-radius: 6px; }
+
+/* ── Shell ─────────────────────────────────────────── */
+.app { min-height: 100vh; padding-left: 88px; }
+.sidebar {
+  position: fixed; inset: 0 auto 0 0; width: 88px; z-index: 40;
+  display: flex; flex-direction: column; align-items: center; justify-content: space-between;
+  padding: 24px 0 32px; border-right: .5px solid var(--n-400);
+  background:
+    linear-gradient(rgba(251,251,251,.88), rgba(251,251,251,.88)),
+    radial-gradient(80px 240px at 50% 80%, rgba(244,211,108,.9), rgba(244,211,108,0) 100%),
+    var(--cream);
+}
+.sb-top { display: flex; flex-direction: column; align-items: center; gap: 48px; }
+.logo-mark { display: block; }
+.nav { display: flex; flex-direction: column; gap: 16px; }
+.nav a, .sb-bottom a {
+  width: 40px; height: 40px; display: grid; place-items: center;
+  border-radius: var(--r-sm); color: var(--n-800); transition: background-color .15s;
+}
+.nav a:hover, .sb-bottom a:hover { background: rgba(52,52,52,.06); }
+.nav a[aria-current="page"] { background: var(--n-800); color: var(--n-50); }
+.nav .i, .sb-bottom .i { width: 15px; height: 15px; }
+.sb-bottom { display: flex; flex-direction: column; align-items: center; gap: 8px; }
+.sb-bottom::before { content: ""; width: 40px; height: 1px; background: var(--n-500); }
+
+.topbar {
+  position: sticky; top: 0; z-index: 30; height: 56px;
+  display: flex; align-items: center; gap: 16px; padding: 8px 48px;
+  background: var(--glass); -webkit-backdrop-filter: saturate(180%) blur(20px); backdrop-filter: saturate(180%) blur(20px);
+  border-bottom: 1px solid var(--n-300);
+}
+.brand-mini { display: none; }
+.org { flex: 1; min-width: 0; font-weight: 700; color: var(--n-700); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.search {
+  width: 238px; height: 40px; display: flex; align-items: center; gap: 8px; padding: 0 8px 0 16px;
+  background: var(--n-50); border: 1px solid var(--n-400); border-radius: 80px; color: var(--n-500); cursor: pointer;
+}
+.search .lbl { flex: 1; text-align: left; }
+.keys { display: flex; gap: 4px; }
+kbd {
+  width: 24px; height: 24px; display: grid; place-items: center; border-radius: var(--r-sm);
+  background: var(--n-200); color: var(--n-800); font: 600 13px/1 var(--font);
+}
+.ibtn {
+  width: 32px; height: 32px; display: inline-grid; place-items: center; flex: none;
+  border: 0; border-radius: var(--r-sm); background: transparent; color: var(--n-800); cursor: pointer;
+  transition: background-color .15s, color .15s;
+}
+.ibtn:hover { background: rgba(52,52,52,.07); color: var(--n-900); }
+.ibtn--sm { width: 28px; height: 28px; color: var(--n-600); }
+.bell { position: relative; }
+.bell::after { content: ""; position: absolute; top: 7px; right: 7px; width: 7px; height: 7px; border-radius: 50%; background: var(--red-6); box-shadow: 0 0 0 2px var(--n-100); }
+.me { display: flex; align-items: center; gap: 8px; padding: 0; border: 0; background: none; cursor: pointer; }
+.me img { width: 32px; height: 32px; border-radius: 50%; display: block; }
+.me .i { margin: 0 8px; color: var(--n-800); }
+
+.content { max-width: 1440px; margin: 0 auto; padding: 24px 48px 128px; }
+
+/* ── Page head ─────────────────────────────────────── */
+.pagehead { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; }
+.back { width: 40px; height: 40px; display: grid; place-items: center; border-radius: var(--r-sm); background: var(--n-300); color: var(--n-800); }
+.back:hover { background: #d2d2d2; }
+.crumbs { display: flex; align-items: center; gap: 8px; color: var(--n-600); min-width: 0; }
+.crumbs a:hover { color: var(--n-900); }
+.crumbs .i { color: var(--n-400); }
+.crumbs b { font-weight: 600; color: var(--n-900); }
+
+/* ── Layout ────────────────────────────────────────── */
+.layout {
+  display: grid; gap: 16px; align-items: start;
+  grid-template-columns: minmax(0, 1fr) 360px;
+  grid-template-areas: "hero rail" "main rail" "rel rel";
+}
+.hero { grid-area: hero; }
+.rail { grid-area: rail; display: flex; flex-direction: column; gap: 16px; min-width: 0; }
+.main { grid-area: main; display: flex; flex-direction: column; gap: 16px; min-width: 0; container: main / inline-size; }
+.related { grid-area: rel; }
+.parties { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+.parties .group { flex: 1; }
+@container main (max-width: 600px) { .parties { grid-template-columns: minmax(0, 1fr); } }
+
+/* ── Card + grupo unificado (patrón del DS) ───────── */
+.card {
+  background: var(--n-50); border: 1px solid var(--n-300); border-radius: var(--r-md);
+  padding: 16px; display: flex; flex-direction: column; gap: 16px; min-width: 0;
+}
+.card-h { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 24px; }
+.card-t { font: 600 16px/24px var(--font); color: var(--n-800); }
+.card-m { color: var(--n-500); white-space: nowrap; }
+
+.group { background: var(--n-200); border-radius: var(--r-mdx); padding: 0 12px; min-width: 0; }
+.group > * + * { border-top: 1px solid var(--n-300); }
+.row { display: flex; align-items: baseline; justify-content: space-between; gap: 16px; padding: 12px 0; }
+.k { color: var(--n-600); white-space: nowrap; flex: none; }
+.v { min-width: 0; text-align: right; font-weight: 600; color: var(--n-900); overflow-wrap: anywhere; }
+.v.mono { font-weight: 500; }
+.v--soft { font-weight: 500; color: var(--n-700); }
+/* En tarjetas angostas la fila pasa a etiqueta arriba / valor abajo: nada se trunca. */
+.adapt { container: grp / inline-size; }
+@container grp (max-width: 380px) {
+  .adapt .row { flex-direction: column; align-items: flex-start; gap: 2px; }
+  .adapt .row .k { font-size: 12px; line-height: 16px; }
+  .adapt .row .v { text-align: left; }
+  .adapt .row.sum { flex-direction: row; align-items: center; }
+  .adapt .row.sum .k { font-size: 14px; line-height: 20px; }
+  .adapt .sum .when-closed, .adapt .sum .when-open { display: none; }
+}
+
+/* Clave de catálogo SAT: lo que lee el SAT va en mono, lo que lee la persona en Inter. */
+.code {
+  display: inline-block; margin-right: 6px; padding: 0 5px; vertical-align: 1px;
+  font: 500 11.5px/16px var(--mono); letter-spacing: 0; color: var(--n-700); white-space: nowrap;
+  background: rgba(255,255,255,.72); border: 1px solid var(--n-300); border-radius: 6px;
+}
+
+/* ── Pills y botones ──────────────────────────────── */
+.pill {
+  display: inline-flex; align-items: center; gap: 6px; height: 24px; padding: 0 10px 0 8px;
+  border-radius: 999px; font: 600 12px/16px var(--font); white-space: nowrap;
+}
+.pill .i { width: 12px; height: 12px; }
+.pill--ok { background: var(--green-tint); color: var(--green-10); }
+.pill--ok .i { color: var(--green-6); }
+.pill--info { background: var(--blue-tint); color: var(--blue-800); }
+.pill--info .i { color: var(--blue-600); }
+.pill--plain { background: var(--n-200); color: var(--n-800); padding: 0 10px; }
+
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  height: 40px; padding: 0 16px; border: 1px solid transparent; border-radius: var(--r-sm);
+  font: 600 14px/20px var(--font); white-space: nowrap; cursor: pointer;
+  background: var(--n-300); color: var(--n-800);
+  transition: background-color .15s, border-color .15s, transform .1s;
+}
+.btn:active { transform: scale(.98); }
+.btn--primary { background: var(--n-900); color: var(--n-50); }
+.btn--primary:hover { background: #242424; }
+.btn--secondary:hover { background: #d2d2d2; }
+.btn--danger { color: var(--red-ink); }
+.btn--quiet { height: 32px; padding: 0 12px; background: var(--n-50); border-color: var(--n-300); color: var(--n-800); }
+.btn--quiet:hover { background: var(--n-200); }
+
+/* ── Encabezado (Detalle de factura) ──────────────── */
+.hero { padding: 24px; gap: 20px; }
+.hero-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+.eyebrow { font: 500 12px/16px var(--font); color: var(--n-600); }
+.title { margin-top: 4px; font: 600 24px/32px var(--font); letter-spacing: -.015em; color: var(--n-900); }
+.sub { margin-top: 2px; color: var(--n-600); }
+.sub b { font-weight: 600; color: var(--n-800); }
+.pills { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+.hero-actions { display: flex; gap: 8px; }
+.uuid-row { align-items: center; }
+.uuid-row .uuid { margin-left: auto; color: var(--n-900); }
+.uuid-row .tools { margin-left: -8px; }
+
+/* ── Totales (riel) ───────────────────────────────── */
+.totals { padding: 24px; gap: 20px; position: relative; container: tot / inline-size; }
+.totals .head { padding-right: 60px; display: flex; flex-direction: column; gap: 4px; }
+.amount {
+  display: flex; align-items: baseline; flex-wrap: wrap; gap: 0 8px; margin-top: 2px;
+  font: 600 36px/44px var(--font); letter-spacing: -.025em; color: var(--green-text); font-variant-numeric: tabular-nums;
+}
+.amount small { font: 600 15px/20px var(--font); letter-spacing: .02em; color: var(--green-text); opacity: .72; }
+.totals .pill { align-self: flex-start; margin-top: 8px; }
+.receipt { position: absolute; top: 22px; right: 24px; width: 44px; height: 52px; filter: drop-shadow(0 4px 8px rgba(52,52,52,.10)); }
+.receipt .paper { fill: var(--surface); stroke: var(--n-300); }
+.receipt .ink { fill: var(--n-400); }
+.receipt .ink-soft { fill: var(--n-300); }
+.receipt .band { fill: var(--n-200); }
+@container tot (max-width: 300px) { .receipt { display: none; } .totals .head { padding-right: 0; } }
+.row--total .k { color: var(--n-900); font-weight: 600; }
+.row--total .v { font-size: 16px; }
+.group > .row--total { border-top-color: var(--n-400); }
+.words { color: var(--n-600); font-size: 13px; line-height: 18px; padding: 0 4px; text-wrap: pretty; }
+
+/* ── Emisor / Receptor ───────────────────────────── */
+.who { display: flex; align-items: center; gap: 12px; padding: 12px 0; }
+.av {
+  width: 36px; height: 36px; flex: none; display: grid; place-items: center; border-radius: 50%;
+  background: var(--surface); border: 1px solid var(--n-300); color: var(--n-700); font: 600 12px/1 var(--font); letter-spacing: .02em;
+}
+.who-txt { min-width: 0; flex: 1; }
+.nm { font-weight: 600; color: var(--n-900); overflow-wrap: anywhere; }
+.id { display: flex; flex-wrap: wrap; align-items: center; gap: 2px 8px; font-size: 12px; line-height: 16px; color: var(--n-600); margin-top: 2px; }
+.id .mono { font-size: 12px; color: var(--n-800); }
+
+/* ── Conceptos ────────────────────────────────────── */
+.line { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 4px 16px; padding: 12px 0; }
+.line .d { font-weight: 600; color: var(--n-900); }
+.line .t { font-weight: 600; text-align: right; }
+.line .meta { display: flex; flex-wrap: wrap; gap: 6px 12px; font-size: 12px; line-height: 16px; color: var(--n-600); }
+.line .qty { font-size: 12px; line-height: 16px; color: var(--n-600); text-align: right; white-space: nowrap; }
+
+/* ── Timbre fiscal digital ───────────────────────── */
+details > summary { list-style: none; cursor: pointer; }
+details > summary::-webkit-details-marker { display: none; }
+.sum { align-items: center; }
+.sum .k { display: inline-flex; align-items: center; gap: 8px; color: var(--n-800); white-space: normal; flex: 1 1 auto; }
+.sum .k .i { color: var(--n-600); }
+.sum .v { display: inline-flex; align-items: center; gap: 6px; font-weight: 600; color: var(--n-800); flex: none; }
+.sum .chev { transition: transform .2s ease; }
+details[open] .sum .chev { transform: rotate(180deg); }
+details[open] .when-closed, details:not([open]) .when-open { display: none; }
+.stack { display: flex; flex-direction: column; gap: 6px; padding: 12px 0; }
+.stack-h { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.tools { display: flex; align-items: center; gap: 2px; }
+.link-btn { border: 0; background: none; padding: 4px 6px; border-radius: 6px; font: 600 12px/16px var(--font); color: var(--n-800); cursor: pointer; }
+.link-btn:hover { background: rgba(52,52,52,.07); }
+.sello {
+  font: 400 12px/18px var(--mono); color: var(--n-700); word-break: break-all;
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+}
+.sello.is-open { display: block; }
+
+/* ── Relacionados ─────────────────────────────────── */
+.seg { display: inline-flex; gap: 2px; padding: 2px; border-radius: 10px; background: var(--n-200); }
+.seg button {
+  height: 32px; padding: 0 12px; display: inline-flex; align-items: center; gap: 6px;
+  border: 0; border-radius: var(--r-sm); background: transparent; color: var(--n-600);
+  font: 600 13px/16px var(--font); cursor: pointer; white-space: nowrap;
+}
+.seg button:hover { color: var(--n-900); }
+.seg button[aria-selected="true"], .seg button[aria-pressed="true"] { background: var(--surface); color: var(--n-900); box-shadow: 0 1px 2px rgba(52,52,52,.10), 0 1px 3px rgba(52,52,52,.06); }
+.count { min-width: 18px; padding: 0 5px; border-radius: 999px; background: var(--n-200); color: var(--n-600); font: 600 11px/16px var(--font); text-align: center; }
+.seg button[aria-selected="true"] .count { background: var(--n-200); color: var(--n-800); }
+.related .card-h { flex-wrap: wrap; }
+.tablewrap { background: var(--n-200); border-radius: var(--r-mdx); overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; }
+th { padding: 10px 12px 8px; text-align: left; font: 500 12px/16px var(--font); color: var(--n-600); white-space: nowrap; }
+td { padding: 12px; border-top: 1px solid var(--n-300); white-space: nowrap; color: var(--n-800); }
+td.strong { font-weight: 600; color: var(--n-900); }
+th.r, td.r { text-align: right; }
+tbody tr { transition: background-color .15s; }
+tbody tr:hover { background: rgba(255,255,255,.55); cursor: pointer; }
+
+/* ── Barra de acciones ────────────────────────────── */
+.actionbar {
+  position: fixed; left: 88px; right: 0; bottom: 0; z-index: 30;
+  display: flex; align-items: center; justify-content: space-between; gap: 16px;
+  padding: 24px 48px calc(24px + env(safe-area-inset-bottom, 0px));
+  background: var(--glass); -webkit-backdrop-filter: saturate(180%) blur(20px); backdrop-filter: saturate(180%) blur(20px);
+  border-top: 1px solid var(--n-300);
+}
+.bar-actions { display: flex; gap: 12px; margin-left: auto; }
+.mock { display: flex; align-items: center; gap: 10px; color: var(--n-600); font-size: 12px; }
+.mock-tag {
+  padding: 2px 6px; border: 1px dashed var(--brand); border-radius: 6px; color: var(--brand);
+  font: 600 10px/14px var(--font); letter-spacing: .08em; text-transform: uppercase;
+}
+.seg--sm button { height: 28px; font-size: 12px; padding: 0 10px; }
+
+.toast {
+  position: fixed; left: calc(50% + 44px); bottom: 112px; z-index: 50;
+  display: flex; align-items: center; gap: 8px; padding: 10px 16px; border-radius: 999px;
+  background: var(--n-900); color: var(--n-50); font-weight: 500; box-shadow: var(--shadow-xs);
+  opacity: 0; transform: translate(-50%, 8px); pointer-events: none; transition: opacity .2s, transform .2s;
+}
+.toast .i { color: var(--green-4); }
+.toast.is-on { opacity: 1; transform: translate(-50%, 0); }
+
+/* ── Responsive ───────────────────────────────────── */
+@media (max-width: 1180px) { .layout { grid-template-columns: minmax(0, 1fr) 320px; } }
+@media (max-width: 1024px) {
+  .topbar { padding: 8px 24px; }
+  .content { padding: 24px 24px 128px; }
+  .actionbar { padding-inline: 24px; }
+}
+@media (max-width: 960px) {
+  .layout { display: flex; flex-direction: column; align-items: stretch; }
+  .rail, .main { display: contents; }
+  .hero { order: 1; } .totals { order: 2; } .parties { order: 3; } .conceptos { order: 4; }
+  .generales { order: 5; } .tfd { order: 6; } .related { order: 7; }
+}
+@media (max-width: 640px) { .parties { grid-template-columns: minmax(0, 1fr); } }
+@media (max-width: 720px) {
+  .app { padding-left: 0; }
+  .sidebar { display: none; }
+  .brand-mini { display: block; flex: none; }
+  .brand-mini .logo-mark { width: 32px; height: 32px; }
+  .search { width: 40px; padding: 0; justify-content: center; }
+  .search .lbl, .search .keys { display: none; }
+  .actionbar { left: 0; }
+  .toast { left: 50%; }
+}
+@media (max-width: 560px) {
+  .topbar { padding: 8px 16px; gap: 8px; }
+  .content { padding: 16px 16px 112px; }
+  .hero, .totals { padding: 16px; }
+  .receipt { top: 14px; right: 16px; }
+  .mock { display: none; }
+  .actionbar { padding: 12px 16px calc(12px + env(safe-area-inset-bottom, 0px)); }
+  .bar-actions { flex: 1; }
+  .bar-actions .btn { flex: 1; padding: 0 8px; }
+  .uuid-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 2px 8px; }
+  .uuid-row .k { font-size: 12px; line-height: 16px; }
+  .uuid-row .uuid { grid-column: 1 / -1; grid-row: 2; margin-left: 0; font-size: 12.5px; }
+  .uuid-row .tools { margin: -6px -6px -6px 0; }
+  .toast { bottom: 84px; }
+}
+@supports (interpolate-size: allow-keywords) {
+  :root { interpolate-size: allow-keywords; }
+  details::details-content { block-size: 0; overflow: clip; transition: block-size .28s ease, content-visibility .28s allow-discrete; }
+  details[open]::details-content { block-size: auto; }
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { transition: none !important; animation: none !important; }
+}
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+<!-- Íconos: Font Awesome Free 6.7.2 (CC BY 4.0), salvo "sparkles" (dibujado; en el DS es FA Pro). -->
+<symbol id="i-house" viewBox="0 -32 576 576"><path d="M575.8 255.5c0 18-15 32.1-32 32.1l-32 0 .7 160.2c0 2.7-.2 5.4-.5 8.1l0 16.2c0 22.1-17.9 40-40 40l-16 0c-1.1 0-2.2 0-3.3-.1c-1.4 .1-2.8 .1-4.2 .1L416 512l-24 0c-22.1 0-40-17.9-40-40l0-24 0-64c0-17.7-14.3-32-32-32l-64 0c-17.7 0-32 14.3-32 32l0 64 0 24c0 22.1-17.9 40-40 40l-24 0-31.9 0c-1.5 0-3-.1-4.5-.2c-1.2 .1-2.4 .2-3.6 .2l-16 0c-22.1 0-40-17.9-40-40l0-112c0-.9 0-1.9 .1-2.8l0-69.7-32 0c-18 0-32-14-32-32.1c0-9 3-17 10-24L266.4 8c7-7 15-8 22-8s15 2 21 7L564.8 231.5c8 7 12 15 11 24z"/></symbol>
+<symbol id="i-users" viewBox="0 -64 640 640"><path d="M144 0a80 80 0 1 1 0 160A80 80 0 1 1 144 0zM512 0a80 80 0 1 1 0 160A80 80 0 1 1 512 0zM0 298.7C0 239.8 47.8 192 106.7 192l42.7 0c15.9 0 31 3.5 44.6 9.7c-1.3 7.2-1.9 14.7-1.9 22.3c0 38.2 16.8 72.5 43.3 96c-.2 0-.4 0-.7 0L21.3 320C9.6 320 0 310.4 0 298.7zM405.3 320c-.2 0-.4 0-.7 0c26.6-23.5 43.3-57.8 43.3-96c0-7.6-.7-15-1.9-22.3c13.6-6.3 28.7-9.7 44.6-9.7l42.7 0C592.2 192 640 239.8 640 298.7c0 11.8-9.6 21.3-21.3 21.3l-213.3 0zM224 224a96 96 0 1 1 192 0 96 96 0 1 1 -192 0zM128 485.3C128 411.7 187.7 352 261.3 352l117.3 0C452.3 352 512 411.7 512 485.3c0 14.7-11.9 26.7-26.7 26.7l-330.7 0c-14.7 0-26.7-11.9-26.7-26.7z"/></symbol>
+<symbol id="i-suitcase" viewBox="0 0 512 512"><path d="M176 56l0 40 160 0 0-40c0-4.4-3.6-8-8-8L184 48c-4.4 0-8 3.6-8 8zM128 96l0-40c0-30.9 25.1-56 56-56L328 0c30.9 0 56 25.1 56 56l0 40 0 32 0 352-256 0 0-352 0-32zM64 96l32 0 0 384-32 0c-35.3 0-64-28.7-64-64L0 160c0-35.3 28.7-64 64-64zM448 480l-32 0 0-384 32 0c35.3 0 64 28.7 64 64l0 256c0 35.3-28.7 64-64 64z"/></symbol>
+<symbol id="i-invoice" viewBox="-64 0 512 512"><path d="M64 0C28.7 0 0 28.7 0 64L0 448c0 35.3 28.7 64 64 64l256 0c35.3 0 64-28.7 64-64l0-288-128 0c-17.7 0-32-14.3-32-32L224 0 64 0zM256 0l0 128 128 0L256 0zM64 80c0-8.8 7.2-16 16-16l64 0c8.8 0 16 7.2 16 16s-7.2 16-16 16L80 96c-8.8 0-16-7.2-16-16zm0 64c0-8.8 7.2-16 16-16l64 0c8.8 0 16 7.2 16 16s-7.2 16-16 16l-64 0c-8.8 0-16-7.2-16-16zm128 72c8.8 0 16 7.2 16 16l0 17.3c8.5 1.2 16.7 3.1 24.1 5.1c8.5 2.3 13.6 11 11.3 19.6s-11 13.6-19.6 11.3c-11.1-3-22-5.2-32.1-5.3c-8.4-.1-17.4 1.8-23.6 5.5c-5.7 3.4-8.1 7.3-8.1 12.8c0 3.7 1.3 6.5 7.3 10.1c6.9 4.1 16.6 7.1 29.2 10.9l.5 .1s0 0 0 0s0 0 0 0c11.3 3.4 25.3 7.6 36.3 14.6c12.1 7.6 22.4 19.7 22.7 38.2c.3 19.3-9.6 33.3-22.9 41.6c-7.7 4.8-16.4 7.6-25.1 9.1l0 17.1c0 8.8-7.2 16-16 16s-16-7.2-16-16l0-17.8c-11.2-2.1-21.7-5.7-30.9-8.9c0 0 0 0 0 0c-2.1-.7-4.2-1.4-6.2-2.1c-8.4-2.8-12.9-11.9-10.1-20.2s11.9-12.9 20.2-10.1c2.5 .8 4.8 1.6 7.1 2.4c0 0 0 0 0 0s0 0 0 0s0 0 0 0c13.6 4.6 24.6 8.4 36.3 8.7c9.1 .3 17.9-1.7 23.7-5.3c5.1-3.2 7.9-7.3 7.8-14c-.1-4.6-1.8-7.8-7.7-11.6c-6.8-4.3-16.5-7.4-29-11.2l-1.6-.5s0 0 0 0c-11-3.3-24.3-7.3-34.8-13.7c-12-7.2-22.6-18.9-22.7-37.3c-.1-19.4 10.8-32.8 23.8-40.5c7.5-4.4 15.8-7.2 24.1-8.7l0-17.3c0-8.8 7.2-16 16-16z"/></symbol>
+<symbol id="i-chart" viewBox="0 0 512 512"><path d="M64 64c0-17.7-14.3-32-32-32S0 46.3 0 64L0 400c0 44.2 35.8 80 80 80l400 0c17.7 0 32-14.3 32-32s-14.3-32-32-32L80 416c-8.8 0-16-7.2-16-16L64 64zm406.6 86.6c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0L320 210.7l-57.4-57.4c-12.5-12.5-32.8-12.5-45.3 0l-112 112c-12.5 12.5-12.5 32.8 0 45.3s32.8 12.5 45.3 0L240 221.3l57.4 57.4c12.5 12.5 32.8 12.5 45.3 0l128-128z"/></symbol>
+<symbol id="i-building" viewBox="-64 0 512 512"><path d="M64 48c-8.8 0-16 7.2-16 16l0 384c0 8.8 7.2 16 16 16l80 0 0-64c0-26.5 21.5-48 48-48s48 21.5 48 48l0 64 80 0c8.8 0 16-7.2 16-16l0-384c0-8.8-7.2-16-16-16L64 48zM0 64C0 28.7 28.7 0 64 0L320 0c35.3 0 64 28.7 64 64l0 384c0 35.3-28.7 64-64 64L64 512c-35.3 0-64-28.7-64-64L0 64zm88 40c0-8.8 7.2-16 16-16l48 0c8.8 0 16 7.2 16 16l0 48c0 8.8-7.2 16-16 16l-48 0c-8.8 0-16-7.2-16-16l0-48zM232 88l48 0c8.8 0 16 7.2 16 16l0 48c0 8.8-7.2 16-16 16l-48 0c-8.8 0-16-7.2-16-16l0-48c0-8.8 7.2-16 16-16zM88 232c0-8.8 7.2-16 16-16l48 0c8.8 0 16 7.2 16 16l0 48c0 8.8-7.2 16-16 16l-48 0c-8.8 0-16-7.2-16-16l0-48zm144-16l48 0c8.8 0 16 7.2 16 16l0 48c0 8.8-7.2 16-16 16l-48 0c-8.8 0-16-7.2-16-16l0-48c0-8.8 7.2-16 16-16z"/></symbol>
+<symbol id="i-gear" viewBox="0 0 512 512"><path d="M495.9 166.6c3.2 8.7 .5 18.4-6.4 24.6l-43.3 39.4c1.1 8.3 1.7 16.8 1.7 25.4s-.6 17.1-1.7 25.4l43.3 39.4c6.9 6.2 9.6 15.9 6.4 24.6c-4.4 11.9-9.7 23.3-15.8 34.3l-4.7 8.1c-6.6 11-14 21.4-22.1 31.2c-5.9 7.2-15.7 9.6-24.5 6.8l-55.7-17.7c-13.4 10.3-28.2 18.9-44 25.4l-12.5 57.1c-2 9.1-9 16.3-18.2 17.8c-13.8 2.3-28 3.5-42.5 3.5s-28.7-1.2-42.5-3.5c-9.2-1.5-16.2-8.7-18.2-17.8l-12.5-57.1c-15.8-6.5-30.6-15.1-44-25.4L83.1 425.9c-8.8 2.8-18.6 .3-24.5-6.8c-8.1-9.8-15.5-20.2-22.1-31.2l-4.7-8.1c-6.1-11-11.4-22.4-15.8-34.3c-3.2-8.7-.5-18.4 6.4-24.6l43.3-39.4C64.6 273.1 64 264.6 64 256s.6-17.1 1.7-25.4L22.4 191.2c-6.9-6.2-9.6-15.9-6.4-24.6c4.4-11.9 9.7-23.3 15.8-34.3l4.7-8.1c6.6-11 14-21.4 22.1-31.2c5.9-7.2 15.7-9.6 24.5-6.8l55.7 17.7c13.4-10.3 28.2-18.9 44-25.4l12.5-57.1c2-9.1 9-16.3 18.2-17.8C227.3 1.2 241.5 0 256 0s28.7 1.2 42.5 3.5c9.2 1.5 16.2 8.7 18.2 17.8l12.5 57.1c15.8 6.5 30.6 15.1 44 25.4l55.7-17.7c8.8-2.8 18.6-.3 24.5 6.8c8.1 9.8 15.5 20.2 22.1 31.2l4.7 8.1c6.1 11 11.4 22.4 15.8 34.3zM256 336a80 80 0 1 0 0-160 80 80 0 1 0 0 160z"/></symbol>
+<symbol id="i-bell" viewBox="-32 0 512 512"><path d="M224 0c-17.7 0-32 14.3-32 32l0 19.2C119 66 64 130.6 64 208l0 18.8c0 47-17.3 92.4-48.5 127.6l-7.4 8.3c-8.4 9.4-10.4 22.9-5.3 34.4S19.4 416 32 416l384 0c12.6 0 24-7.4 29.2-18.9s3.1-25-5.3-34.4l-7.4-8.3C401.3 319.2 384 273.9 384 226.8l0-18.8c0-77.4-55-142-128-156.8L256 32c0-17.7-14.3-32-32-32zm45.3 493.3c12-12 18.7-28.3 18.7-45.3l-64 0-64 0c0 17 6.7 33.3 18.7 45.3s28.3 18.7 45.3 18.7s33.3-6.7 45.3-18.7z"/></symbol>
+<symbol id="i-search" viewBox="0 0 512 512"><path d="M416 208c0 45.9-14.9 88.3-40 122.7L502.6 457.4c12.5 12.5 12.5 32.8 0 45.3s-32.8 12.5-45.3 0L330.7 376c-34.4 25.2-76.8 40-122.7 40C93.1 416 0 322.9 0 208S93.1 0 208 0S416 93.1 416 208zM208 352a144 144 0 1 0 0-288 144 144 0 1 0 0 288z"/></symbol>
+<symbol id="i-chev-down" viewBox="0 0 512 512"><path d="M233.4 406.6c12.5 12.5 32.8 12.5 45.3 0l192-192c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0L256 338.7 86.6 169.4c-12.5-12.5-32.8-12.5-45.3 0s-12.5 32.8 0 45.3l192 192z"/></symbol>
+<symbol id="i-chev-right" viewBox="-96 0 512 512"><path d="M310.6 233.4c12.5 12.5 12.5 32.8 0 45.3l-192 192c-12.5 12.5-32.8 12.5-45.3 0s-12.5-32.8 0-45.3L242.7 256 73.4 86.6c-12.5-12.5-12.5-32.8 0-45.3s32.8-12.5 45.3 0l192 192z"/></symbol>
+<symbol id="i-arrow-left" viewBox="-32 0 512 512"><path d="M9.4 233.4c-12.5 12.5-12.5 32.8 0 45.3l160 160c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3L109.2 288 416 288c17.7 0 32-14.3 32-32s-14.3-32-32-32l-306.7 0L214.6 118.6c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0l-160 160z"/></symbol>
+<symbol id="i-copy" viewBox="-32 0 512 512"><path d="M384 336l-192 0c-8.8 0-16-7.2-16-16l0-256c0-8.8 7.2-16 16-16l140.1 0L400 115.9 400 320c0 8.8-7.2 16-16 16zM192 384l192 0c35.3 0 64-28.7 64-64l0-204.1c0-12.7-5.1-24.9-14.1-33.9L366.1 14.1c-9-9-21.2-14.1-33.9-14.1L192 0c-35.3 0-64 28.7-64 64l0 256c0 35.3 28.7 64 64 64zM64 128c-35.3 0-64 28.7-64 64L0 448c0 35.3 28.7 64 64 64l192 0c35.3 0 64-28.7 64-64l0-32-48 0 0 32c0 8.8-7.2 16-16 16L64 464c-8.8 0-16-7.2-16-16l0-256c0-8.8 7.2-16 16-16l32 0 0-48-32 0z"/></symbol>
+<symbol id="i-download" viewBox="0 0 512 512"><path d="M288 32c0-17.7-14.3-32-32-32s-32 14.3-32 32l0 242.7-73.4-73.4c-12.5-12.5-32.8-12.5-45.3 0s-12.5 32.8 0 45.3l128 128c12.5 12.5 32.8 12.5 45.3 0l128-128c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0L288 274.7 288 32zM64 352c-35.3 0-64 28.7-64 64l0 32c0 35.3 28.7 64 64 64l384 0c35.3 0 64-28.7 64-64l0-32c0-35.3-28.7-64-64-64l-101.5 0-45.3 45.3c-25 25-65.5 25-90.5 0L165.5 352 64 352zm368 56a24 24 0 1 1 0 48 24 24 0 1 1 0-48z"/></symbol>
+<symbol id="i-check-circle" viewBox="0 0 512 512"><path d="M256 512A256 256 0 1 0 256 0a256 256 0 1 0 0 512zM369 209L241 337c-9.4 9.4-24.6 9.4-33.9 0l-64-64c-9.4-9.4-9.4-24.6 0-33.9s24.6-9.4 33.9 0l47 47L335 175c9.4-9.4 24.6-9.4 33.9 0s9.4 24.6 0 33.9z"/></symbol>
+<symbol id="i-stamp" viewBox="0 0 512 512"><path d="M312 201.8c0-17.4 9.2-33.2 19.9-47C344.5 138.5 352 118.1 352 96c0-53-43-96-96-96s-96 43-96 96c0 22.1 7.5 42.5 20.1 58.8c10.7 13.8 19.9 29.6 19.9 47c0 29.9-24.3 54.2-54.2 54.2L112 256C50.1 256 0 306.1 0 368c0 20.9 13.4 38.7 32 45.3L32 464c0 26.5 21.5 48 48 48l352 0c26.5 0 48-21.5 48-48l0-50.7c18.6-6.6 32-24.4 32-45.3c0-61.9-50.1-112-112-112l-33.8 0c-29.9 0-54.2-24.3-54.2-54.2zM416 416l0 32L96 448l0-32 320 0z"/></symbol>
+<symbol id="i-plus" viewBox="-32 0 512 512"><path d="M256 80c0-17.7-14.3-32-32-32s-32 14.3-32 32l0 144L48 224c-17.7 0-32 14.3-32 32s14.3 32 32 32l144 0 0 144c0 17.7 14.3 32 32 32s32-14.3 32-32l0-144 144 0c17.7 0 32-14.3 32-32s-14.3-32-32-32l-144 0 0-144z"/></symbol>
+<symbol id="i-external" viewBox="0 0 512 512"><path d="M320 0c-17.7 0-32 14.3-32 32s14.3 32 32 32l82.7 0L201.4 265.4c-12.5 12.5-12.5 32.8 0 45.3s32.8 12.5 45.3 0L448 109.3l0 82.7c0 17.7 14.3 32 32 32s32-14.3 32-32l0-160c0-17.7-14.3-32-32-32L320 0zM80 32C35.8 32 0 67.8 0 112L0 432c0 44.2 35.8 80 80 80l320 0c44.2 0 80-35.8 80-80l0-112c0-17.7-14.3-32-32-32s-32 14.3-32 32l0 112c0 8.8-7.2 16-16 16L80 448c-8.8 0-16-7.2-16-16l0-320c0-8.8 7.2-16 16-16l112 0c17.7 0 32-14.3 32-32s-14.3-32-32-32L80 32z"/></symbol>
+<symbol id="i-check" viewBox="-32 0 512 512"><path d="M438.6 105.4c12.5 12.5 12.5 32.8 0 45.3l-256 256c-12.5 12.5-32.8 12.5-45.3 0l-128-128c-12.5-12.5-12.5-32.8 0-45.3s32.8-12.5 45.3 0L160 338.7 393.4 105.4c12.5-12.5 32.8-12.5 45.3 0z"/></symbol>
+<symbol id="i-info" viewBox="0 0 512 512"><path d="M256 512A256 256 0 1 0 256 0a256 256 0 1 0 0 512zM216 336l24 0 0-64-24 0c-13.3 0-24-10.7-24-24s10.7-24 24-24l48 0c13.3 0 24 10.7 24 24l0 88 8 0c13.3 0 24 10.7 24 24s-10.7 24-24 24l-80 0c-13.3 0-24-10.7-24-24s10.7-24 24-24zm40-208a32 32 0 1 1 0 64 32 32 0 1 1 0-64z"/></symbol>
+<symbol id="i-sparkles" viewBox="0 0 24 24"><path d="M9.5 4.5c.5 3.9 2.6 6 6.5 6.5-3.9.5-6 2.6-6.5 6.5-.5-3.9-2.6-6-6.5-6.5 3.9-.5 6-2.6 6.5-6.5Z"/><path d="M18 2c.25 1.9 1.1 2.75 3 3-1.9.25-2.75 1.1-3 3-.25-1.9-1.1-2.75-3-3 1.9-.25 2.75-1.1 3-3Z"/><path d="M18.5 15c.2 1.4.85 2.05 2.25 2.25-1.4.2-2.05.85-2.25 2.25-.2-1.4-.85-2.05-2.25-2.25 1.4-.2 2.05-.85 2.25-2.25Z"/></symbol>
+</svg>
+
+<div class="app">
+  <aside class="sidebar" aria-label="Navegación principal">
+    <div class="sb-top">
+      <a href="#" aria-label="Wind, inicio"><svg class="logo-mark" viewBox="0 0 40 40" width="40" height="40" aria-hidden="true"><path d="M3.02637 29.2188C4.06628 27.1446 5.39147 25.2455 7.05717 23.6322C7.48969 23.2174 8.35475 22.4061 8.81489 22.7104C8.81489 22.7104 8.92532 22.904 8.97133 22.9869C9.01735 23.0699 9.09097 23.3096 9.11858 23.4386C9.24742 23.9549 9.26582 24.4896 9.33024 25.015C9.47748 26.3057 9.78117 27.5594 10.7291 28.5089C11.6953 29.4677 13.0758 29.7904 14.3273 29.2372C15.4777 28.721 16.1587 27.6239 16.8305 26.6099C17.5851 25.4483 18.3489 24.2775 19.1035 23.116C19.803 22.0374 20.484 20.9404 21.2202 19.8802C21.4318 19.576 21.6987 19.2164 21.9748 19.0136C22.2509 18.8108 22.3429 18.8108 22.2693 18.8385C22.7386 18.6818 22.4533 18.8108 22.4073 18.8016C22.4901 18.8016 22.6558 18.8569 22.5086 18.8016C22.7202 18.8754 22.9043 18.986 23.1435 19.2994C23.3736 19.6036 23.5117 19.954 23.6037 20.3596C23.8706 21.4843 23.7233 22.6827 23.7601 23.8258C23.843 26.1305 24.6528 28.7025 26.9811 29.6152C29.5671 30.6293 31.9045 28.7579 33.4046 26.8311C36.7544 22.5352 39.0183 17.4464 39.9661 12.0719C40.1226 11.2054 39.7361 10.3019 38.825 10.053C38.0336 9.83176 36.966 10.3204 36.8096 11.1961C36.009 15.7779 34.242 20.1107 31.5456 23.8904C30.9751 24.6832 30.3677 25.5866 29.5671 26.1674C29.2542 26.3886 28.8584 26.6099 28.4811 26.6099C28.0486 26.6099 27.9566 26.5177 27.6989 26.2135C27.2848 25.7157 27.0823 24.7477 27.0455 24.0747C26.9719 22.7841 27.0731 21.5027 26.8891 20.2213C26.567 17.9904 25.0393 15.6396 22.5914 15.5105C19.941 15.363 18.5054 18.0272 17.263 19.9263C16.5268 21.051 15.7998 22.1757 15.0635 23.3004C14.4194 24.2868 13.858 25.3838 13.0297 26.2227C13.0573 26.195 13.1218 26.2411 13.131 26.2319C13.1862 26.1766 13.1494 26.3241 13.0205 26.2135C13.0481 26.2319 13.0758 26.2135 13.1034 26.2411C12.8089 25.9461 12.7168 25.6511 12.634 25.181C12.4224 24.0655 12.4684 22.9408 12.045 21.8714C11.6217 20.8021 10.3425 19.4008 8.77808 19.3363C7.33325 19.2718 6.02646 20.1107 4.99575 21.0418C3.00796 22.8394 1.39749 25.1441 0.20113 27.5318C-0.194588 28.3246 -0.010533 29.311 0.790105 29.7719C1.59074 30.2329 2.63065 29.9747 3.02637 29.1819V29.2188Z" fill="#5B62E8"/></svg></a>
+      <nav class="nav">
+        <a href="#" title="Inicio" aria-label="Inicio"><svg class="i"><use href="#i-house"/></svg></a>
+        <a href="#" title="Navi" aria-label="Navi"><svg class="i"><use href="#i-sparkles"/></svg></a>
+        <a href="#" title="Clientes" aria-label="Clientes"><svg class="i"><use href="#i-users"/></svg></a>
+        <a href="#" title="Proyectos" aria-label="Proyectos"><svg class="i"><use href="#i-suitcase"/></svg></a>
+        <a href="#" title="Cotizaciones" aria-label="Cotizaciones"><svg class="i"><use href="#i-invoice"/></svg></a>
+        <a href="#" title="Finanzas" aria-label="Finanzas" aria-current="page"><svg class="i"><use href="#i-chart"/></svg></a>
+        <a href="#" title="Empresa" aria-label="Empresa"><svg class="i"><use href="#i-building"/></svg></a>
+      </nav>
+    </div>
+    <div class="sb-bottom">
+      <a href="#" title="Configuración" aria-label="Configuración"><svg class="i"><use href="#i-gear"/></svg></a>
+    </div>
+  </aside>
+
+  <header class="topbar">
+    <a class="brand-mini" href="#" aria-label="Wind, inicio"><svg class="logo-mark" viewBox="0 0 40 40" width="40" height="40" aria-hidden="true"><path d="M3.02637 29.2188C4.06628 27.1446 5.39147 25.2455 7.05717 23.6322C7.48969 23.2174 8.35475 22.4061 8.81489 22.7104C8.81489 22.7104 8.92532 22.904 8.97133 22.9869C9.01735 23.0699 9.09097 23.3096 9.11858 23.4386C9.24742 23.9549 9.26582 24.4896 9.33024 25.015C9.47748 26.3057 9.78117 27.5594 10.7291 28.5089C11.6953 29.4677 13.0758 29.7904 14.3273 29.2372C15.4777 28.721 16.1587 27.6239 16.8305 26.6099C17.5851 25.4483 18.3489 24.2775 19.1035 23.116C19.803 22.0374 20.484 20.9404 21.2202 19.8802C21.4318 19.576 21.6987 19.2164 21.9748 19.0136C22.2509 18.8108 22.3429 18.8108 22.2693 18.8385C22.7386 18.6818 22.4533 18.8108 22.4073 18.8016C22.4901 18.8016 22.6558 18.8569 22.5086 18.8016C22.7202 18.8754 22.9043 18.986 23.1435 19.2994C23.3736 19.6036 23.5117 19.954 23.6037 20.3596C23.8706 21.4843 23.7233 22.6827 23.7601 23.8258C23.843 26.1305 24.6528 28.7025 26.9811 29.6152C29.5671 30.6293 31.9045 28.7579 33.4046 26.8311C36.7544 22.5352 39.0183 17.4464 39.9661 12.0719C40.1226 11.2054 39.7361 10.3019 38.825 10.053C38.0336 9.83176 36.966 10.3204 36.8096 11.1961C36.009 15.7779 34.242 20.1107 31.5456 23.8904C30.9751 24.6832 30.3677 25.5866 29.5671 26.1674C29.2542 26.3886 28.8584 26.6099 28.4811 26.6099C28.0486 26.6099 27.9566 26.5177 27.6989 26.2135C27.2848 25.7157 27.0823 24.7477 27.0455 24.0747C26.9719 22.7841 27.0731 21.5027 26.8891 20.2213C26.567 17.9904 25.0393 15.6396 22.5914 15.5105C19.941 15.363 18.5054 18.0272 17.263 19.9263C16.5268 21.051 15.7998 22.1757 15.0635 23.3004C14.4194 24.2868 13.858 25.3838 13.0297 26.2227C13.0573 26.195 13.1218 26.2411 13.131 26.2319C13.1862 26.1766 13.1494 26.3241 13.0205 26.2135C13.0481 26.2319 13.0758 26.2135 13.1034 26.2411C12.8089 25.9461 12.7168 25.6511 12.634 25.181C12.4224 24.0655 12.4684 22.9408 12.045 21.8714C11.6217 20.8021 10.3425 19.4008 8.77808 19.3363C7.33325 19.2718 6.02646 20.1107 4.99575 21.0418C3.00796 22.8394 1.39749 25.1441 0.20113 27.5318C-0.194588 28.3246 -0.010533 29.311 0.790105 29.7719C1.59074 30.2329 2.63065 29.9747 3.02637 29.1819V29.2188Z" fill="#5B62E8"/></svg></a>
+    <div class="org">AMG Transport Dynamics</div>
+    <button class="search" type="button" aria-label="Buscar en Wind">
+      <svg class="i i-14"><use href="#i-search"/></svg>
+      <span class="lbl">Buscar en Wind</span>
+      <span class="keys" aria-hidden="true"><kbd>⌘</kbd><kbd>K</kbd></span>
+    </button>
+    <button class="ibtn bell" type="button" aria-label="Notificaciones, 1 nueva"><svg class="i"><use href="#i-bell"/></svg></button>
+    <button class="me" type="button" aria-label="Cuenta">
+      <img src="data:image/png;base64,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" alt="" width="32" height="32">
+      <svg class="i i-12"><use href="#i-chev-down"/></svg>
+    </button>
+  </header>
+
+  <main class="content">
+    <div class="pagehead">
+      <a class="back" href="#" aria-label="Volver a facturas"><svg class="i"><use href="#i-arrow-left"/></svg></a>
+      <nav class="crumbs" aria-label="Ruta">
+        <a href="#">Facturas</a>
+        <svg class="i i-10"><use href="#i-chev-right"/></svg>
+        <b aria-current="page">M-19</b>
+      </nav>
+    </div>
+
+    <div class="layout">
+
+      <!-- Detalle de factura → encabezado: identidad, estado y folio fiscal -->
+      <section class="card hero" aria-labelledby="t-factura">
+        <div class="hero-top">
+          <div>
+            <p class="eyebrow">Factura 10565 · CFDI 4.0</p>
+            <h1 class="title" id="t-factura">M-19</h1>
+            <p class="sub">Para <b>Maria Olivia Martinez Sagaz</b> · emitida el 15 sep 2026, 14:32</p>
+            <div class="pills">
+              <span class="pill pill--ok"><svg class="i"><use href="#i-check-circle"/></svg>Vigente</span>
+              <span class="pill pill--plain">Ingreso</span>
+            </div>
+          </div>
+          <div class="hero-actions">
+            <a class="btn btn--quiet" href="#" aria-label="Descargar XML"><svg class="i i-14"><use href="#i-download"/></svg>XML</a>
+            <a class="btn btn--quiet" href="#" aria-label="Descargar PDF"><svg class="i i-14"><use href="#i-download"/></svg>PDF</a>
+          </div>
+        </div>
+        <div class="group">
+          <div class="row uuid-row">
+            <span class="k">Folio fiscal (UUID)</span>
+            <span class="mono uuid" id="uuid">F62CBD9A-F419-4EB8-871E-AD0C74E59971</span>
+            <span class="tools">
+              <button class="ibtn ibtn--sm" type="button" data-copy="#uuid" data-msg="Folio fiscal copiado" aria-label="Copiar folio fiscal" title="Copiar"><svg class="i i-14"><use href="#i-copy"/></svg></button>
+              <a class="ibtn ibtn--sm" href="https://verificacfdi.facturaelectronica.sat.gob.mx/" target="_blank" rel="noopener" aria-label="Verificar en el portal del SAT" title="Verificar en el SAT"><svg class="i i-12"><use href="#i-external"/></svg></a>
+            </span>
+          </div>
+        </div>
+      </section>
+
+      <!-- Totales: el número protagonista, como en el portal de facturación -->
+      <div class="rail">
+        <section class="card totals" aria-labelledby="t-totales">
+          <svg class="receipt" viewBox="0 0 44 52" aria-hidden="true">
+            <rect class="paper" x=".5" y=".5" width="43" height="51" rx="8"/>
+            <rect class="ink" x="7" y="8" width="18" height="2.5" rx="1.25"/>
+            <circle class="ink" cx="36" cy="9.25" r="2.5"/>
+            <rect class="ink-soft" x="7" y="17" width="10" height="2" rx="1"/><rect class="ink-soft" x="31" y="17" width="6" height="2" rx="1"/>
+            <rect class="band" x="1" y="23" width="42" height="9"/>
+            <rect class="ink" x="7" y="26.5" width="16" height="2" rx="1"/><rect class="ink" x="30" y="26.5" width="7" height="2" rx="1"/>
+            <rect class="ink-soft" x="7" y="37" width="13" height="2" rx="1"/><rect class="ink-soft" x="31" y="37" width="6" height="2" rx="1"/>
+            <rect class="ink-soft" x="7" y="44" width="17" height="2" rx="1"/><rect class="ink-soft" x="31" y="44" width="6" height="2" rx="1"/>
+          </svg>
+          <div class="head">
+            <h2 class="card-t" id="t-totales">Totales</h2>
+            <p class="amount" data-scn="noiva">$4,626.00 <small>MXN</small></p>
+            <p class="amount" data-scn="iva" hidden>$5,366.16 <small>MXN</small></p>
+            <span class="pill pill--info"><svg class="i"><use href="#i-check-circle"/></svg>Pagada el 15 sep 2026</span>
+          </div>
+          <div class="group">
+            <div class="row"><span class="k">Subtotal</span><span class="v num">$4,626.00</span></div>
+            <div class="row" data-scn="noiva"><span class="k">Impuestos</span><span class="v v--soft">No objeto de impuesto</span></div>
+            <div class="row" data-scn="iva" hidden><span class="k">IVA trasladado 16%</span><span class="v num">$740.16</span></div>
+            <div class="row row--total" data-scn="noiva"><span class="k">Total</span><span class="v num">$4,626.00</span></div>
+            <div class="row row--total" data-scn="iva" hidden><span class="k">Total</span><span class="v num">$5,366.16</span></div>
+          </div>
+          <p class="words" data-scn="noiva">Cuatro mil seiscientos veintiséis pesos 00/100 M.N.</p>
+          <p class="words" data-scn="iva" hidden>Cinco mil trescientos sesenta y seis pesos 16/100 M.N.</p>
+        </section>
+          <section class="card generales" aria-labelledby="t-generales">
+            <header class="card-h"><h2 class="card-t" id="t-generales">Datos generales</h2></header>
+            <div class="group adapt">
+              <div class="row"><span class="k">Tipo de comprobante</span><span class="v"><span class="code">I</span>Ingreso</span></div>
+              <div class="row"><span class="k">Forma de pago</span><span class="v"><span class="code">03</span>Transferencia electrónica de fondos</span></div>
+              <div class="row"><span class="k">Método de pago</span><span class="v"><span class="code">PUE</span>Pago en una sola exhibición</span></div>
+              <div class="row"><span class="k">Moneda</span><span class="v"><span class="code">MXN</span>Peso mexicano</span></div>
+              <div class="row"><span class="k">Exportación</span><span class="v"><span class="code">01</span>No aplica</span></div>
+            </div>
+          </section>
+      </div>
+
+      <div class="main">
+        <div class="parties">
+          <section class="card" aria-labelledby="t-emisor">
+            <header class="card-h"><h2 class="card-t" id="t-emisor">Emisor</h2></header>
+            <div class="group adapt">
+              <div class="who">
+                <span class="av" aria-hidden="true">EK</span>
+                <div class="who-txt">
+                  <div class="nm">ESCUELA KEMPER URGATE</div>
+                  <div class="id"><span class="mono" id="rfc-e">EKU9003173C9</span><span>Persona moral</span></div>
+                </div>
+                <button class="ibtn ibtn--sm" type="button" data-copy="#rfc-e" data-msg="RFC copiado" aria-label="Copiar RFC del emisor" title="Copiar RFC"><svg class="i i-14"><use href="#i-copy"/></svg></button>
+              </div>
+              <div class="row"><span class="k">Régimen fiscal</span><span class="v"><span class="code">601</span>General de Ley Personas Morales</span></div>
+              <div class="row"><span class="k">Lugar de expedición</span><span class="v num">C.P. 42501</span></div>
+              <div class="row"><span class="k">Certificado (CSD)</span><span class="v mono">30001000000500002668</span></div>
+            </div>
+          </section>
+
+          <section class="card" aria-labelledby="t-receptor">
+            <header class="card-h"><h2 class="card-t" id="t-receptor">Receptor</h2></header>
+            <div class="group adapt">
+              <div class="who">
+                <span class="av" aria-hidden="true">MM</span>
+                <div class="who-txt">
+                  <div class="nm">Maria Olivia Martinez Sagaz</div>
+                  <div class="id"><span class="mono" id="rfc-r">MASO451221PM4</span><span>Persona física</span></div>
+                </div>
+                <button class="ibtn ibtn--sm" type="button" data-copy="#rfc-r" data-msg="RFC copiado" aria-label="Copiar RFC del receptor" title="Copiar RFC"><svg class="i i-14"><use href="#i-copy"/></svg></button>
+              </div>
+              <div class="row"><span class="k">Régimen fiscal</span><span class="v"><span class="code">612</span>Personas Físicas con Actividades Empresariales y Profesionales</span></div>
+              <div class="row"><span class="k">Domicilio fiscal</span><span class="v num">C.P. 80290</span></div>
+              <div class="row"><span class="k">Uso del CFDI</span><span class="v"><span class="code">G03</span>Gastos en general</span></div>
+            </div>
+          </section>
+        </div>
+
+        <section class="card conceptos" aria-labelledby="t-conceptos">
+          <header class="card-h"><h2 class="card-t" id="t-conceptos">Conceptos</h2><span class="card-m">1 concepto</span></header>
+          <div class="group">
+            <div class="line">
+              <span class="d">Aprobaciones 2</span>
+              <span class="t num" data-scn="noiva">$4,626.00</span>
+              <span class="t num" data-scn="iva" hidden>$4,626.00</span>
+              <span class="meta">
+                <span><span class="code">01010101</span>No existe en el catálogo</span>
+                <span><span class="code">ACT</span>Actividad</span>
+                <span data-scn="noiva"><span class="code">01</span>No objeto de impuesto</span>
+                <span data-scn="iva" hidden><span class="code">02</span>IVA 16% · $740.16</span>
+              </span>
+              <span class="qty num">2 × $2,313.00</span>
+            </div>
+          </div>
+        </section>
+
+
+        <section class="card tfd" aria-labelledby="t-tfd">
+          <header class="card-h"><h2 class="card-t" id="t-tfd">Timbre fiscal digital</h2><span class="card-m">Versión 1.1</span></header>
+          <details class="group adapt">
+            <summary class="row sum">
+              <span class="k"><svg class="i i-14"><use href="#i-stamp"/></svg>Timbrado el 15 sep 2026, 14:47:25</span>
+              <span class="v"><span class="when-closed">Ver detalle</span><span class="when-open">Ocultar</span><svg class="i i-12 chev"><use href="#i-chev-down"/></svg></span>
+            </summary>
+            <div class="row"><span class="k">Folio fiscal (UUID)</span><span class="v mono">F62CBD9A-F419-4EB8-871E-AD0C74E59971</span></div>
+            <div class="row"><span class="k">RFC del PAC</span><span class="v mono">AAA010101AAA</span></div>
+            <div class="row"><span class="k">No. de certificado SAT</span><span class="v mono">00001000000509846663</span></div>
+            <div class="stack">
+              <div class="stack-h">
+                <span class="k">Sello digital del CFDI</span>
+                <span class="tools">
+                  <button class="link-btn" type="button" data-expand="#sello-cfd" aria-expanded="false" aria-controls="sello-cfd">Ver completo</button>
+                  <button class="ibtn ibtn--sm" type="button" data-copy="#sello-cfd" data-msg="Sello del CFDI copiado" aria-label="Copiar sello digital del CFDI" title="Copiar"><svg class="i i-14"><use href="#i-copy"/></svg></button>
+                </span>
+              </div>
+              <p class="sello" id="sello-cfd">dMtQofQ5RM9ak/mwfEgCvuUM7ur2rPseCbtJXfWzKaYAL0NIuVK07a/H8JaXvvHBB7L7aPzp6t1N3di6e8RQQLNj87pAwfOwuV67WETWZjciqth1HyKRIJU9ARVDEjSroPgZdkSMQNKwnzP6evbHZSiDJRxaA5RRhc+vYu8SQy++z59FqtQiGHKjl7utQGf7pL0dt94p6XzlOs4XZslPlb1QquRfRF9AnBIyYsUXDr9pUxTwewP2hYkq9e+ltQUM+nydF1AtyW71AUkJID+Uq5U+RFF1cuVifuxuEtDoI0GqFwDQ6MPCNMlcrnrbbjcZxiIjwlGfCsuLKh2fqubKCg==</p>
+            </div>
+            <div class="stack">
+              <div class="stack-h">
+                <span class="k">Sello del SAT</span>
+                <span class="tools">
+                  <button class="link-btn" type="button" data-expand="#sello-sat" aria-expanded="false" aria-controls="sello-sat">Ver completo</button>
+                  <button class="ibtn ibtn--sm" type="button" data-copy="#sello-sat" data-msg="Sello del SAT copiado" aria-label="Copiar sello del SAT" title="Copiar"><svg class="i i-14"><use href="#i-copy"/></svg></button>
+                </span>
+              </div>
+              <p class="sello" id="sello-sat">GfDMvt3m0QLsdCIxMcQHZMTAWEtoz6ak8pKVJfC6QV8t1Wy2Q4X70oA32NkkGudHuZTFx4zBJSQQxmLrI75EHeqfTjo/WIMjiks0eElEt2T4rZFR2sQ0T7HbRPnIefMSA+RMa4ec0QI5rdPxy11YBrSrjpiw+DSNsdrq43uNYLqCDRidELpBD9DsjnmqlMXf5AlMZ1xRqpgAUEaEV8WjCG16Mdp9iI2YPX5HazJPOqLe2YUmh4tOXbEakiaT6cSPUSYTPA40jLf43FcWuP5e+TTrVbiLAC/VtDDn4BhDIsBRgnVtpDIeb6fgyt/skQEeT84r7ptI7+vqmTvnUNBC7g==</p>
+            </div>
+          </details>
+        </section>
+      </div>
+
+      <!-- Cotizaciones asociadas + Transacciones: una sola tarjeta con selector -->
+      <section class="card related" aria-labelledby="t-rel">
+        <h2 class="sr" id="t-rel">Relacionados</h2>
+        <header class="card-h">
+          <div class="seg" role="tablist" aria-label="Relacionados con la factura">
+            <button type="button" role="tab" id="tab-cot" aria-selected="true" aria-controls="p-cot">Cotizaciones <span class="count">2</span></button>
+            <button type="button" role="tab" id="tab-tx" aria-selected="false" aria-controls="p-tx" tabindex="-1">Transacciones <span class="count">1</span></button>
+          </div>
+          <button class="btn btn--quiet" type="button" data-panel="p-cot"><svg class="i i-12"><use href="#i-plus"/></svg>Asociar cotización</button>
+          <button class="btn btn--quiet" type="button" data-panel="p-tx" hidden><svg class="i i-12"><use href="#i-plus"/></svg>Nueva transacción</button>
+        </header>
+        <div class="tablewrap" role="tabpanel" id="p-cot" aria-labelledby="tab-cot">
+          <table>
+            <thead><tr><th>ID</th><th>Cotización</th><th>Proyecto</th><th>Aprobada</th><th class="r">Monto</th></tr></thead>
+            <tbody>
+              <tr><td class="mono">AMG-C1011</td><td class="strong">Aprobaciones · Fase 1</td><td>Solución Épsilon</td><td>02 sep 2026</td><td class="r strong">$2,313.00</td></tr>
+              <tr><td class="mono">AMG-C1012</td><td class="strong">Aprobaciones · Fase 2</td><td>Solución Épsilon</td><td>09 sep 2026</td><td class="r strong">$2,313.00</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="tablewrap" role="tabpanel" id="p-tx" aria-labelledby="tab-tx" hidden>
+          <table>
+            <thead><tr><th>Fecha</th><th>Descripción</th><th>Forma de pago</th><th>Estado</th><th class="r">Monto</th></tr></thead>
+            <tbody>
+              <tr>
+                <td>15 sep 2026</td><td class="strong">Pago SPEI · Ref. 4471209</td><td><span class="code">03</span>Transferencia</td>
+                <td><span class="pill pill--ok"><svg class="i"><use href="#i-check-circle"/></svg>Conciliada</span></td>
+                <td class="r strong" data-scn="noiva">$4,626.00</td><td class="r strong" data-scn="iva" hidden>$5,366.16</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+    </div>
+  </main>
+
+  <footer class="actionbar">
+    <div class="mock" role="group" aria-label="Escenario del mockup">
+      <span class="mock-tag">Mockup</span>
+      <div class="seg seg--sm">
+        <button type="button" data-scenario="noiva" aria-pressed="true">Sin IVA</button>
+        <button type="button" data-scenario="iva" aria-pressed="false">Con IVA 16%</button>
+      </div>
+    </div>
+    <div class="bar-actions">
+      <button class="btn btn--secondary btn--danger" type="button">Cancelar factura</button>
+      <button class="btn btn--primary" type="button">Clonar factura</button>
+    </div>
+  </footer>
+</div>
+
+<div class="toast" role="status" aria-live="polite"><svg class="i i-14"><use href="#i-check"/></svg><span>Copiado</span></div>
+
+<script>
+(() => {
+  const toastEl = document.querySelector('.toast');
+  const toastMsg = toastEl.querySelector('span');
+  let timer;
+  const toast = (msg) => {
+    toastMsg.textContent = msg;
+    toastEl.classList.add('is-on');
+    clearTimeout(timer);
+    timer = setTimeout(() => toastEl.classList.remove('is-on'), 1800);
+  };
+  const selectText = (el) => {
+    const range = document.createRange();
+    range.selectNodeContents(el);
+    const sel = window.getSelection();
+    sel.removeAllRanges();
+    sel.addRange(range);
+  };
+
+  document.addEventListener('click', (e) => {
+    const copyBtn = e.target.closest('[data-copy]');
+    if (copyBtn) {
+      const src = document.querySelector(copyBtn.dataset.copy);
+      const text = src.textContent.trim();
+      const fallback = () => { selectText(src); toast('Texto seleccionado, cópialo con ⌘C'); };
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(() => toast(copyBtn.dataset.msg || 'Copiado'), fallback);
+      } else {
+        fallback();
+      }
+      return;
+    }
+
+    const expandBtn = e.target.closest('[data-expand]');
+    if (expandBtn) {
+      const target = document.querySelector(expandBtn.dataset.expand);
+      const open = target.classList.toggle('is-open');
+      expandBtn.setAttribute('aria-expanded', String(open));
+      expandBtn.textContent = open ? 'Ver menos' : 'Ver completo';
+      return;
+    }
+
+    const tab = e.target.closest('[role="tab"]');
+    if (tab) {
+      selectTab(tab);
+      return;
+    }
+
+    const scn = e.target.closest('[data-scenario]');
+    if (scn) setScenario(scn.dataset.scenario);
+  });
+
+  const tabs = [...document.querySelectorAll('[role="tab"]')];
+  function selectTab(tab) {
+    tabs.forEach((t) => {
+      const on = t === tab;
+      t.setAttribute('aria-selected', String(on));
+      t.tabIndex = on ? 0 : -1;
+      document.getElementById(t.getAttribute('aria-controls')).hidden = !on;
+    });
+    document.querySelectorAll('[data-panel]').forEach((b) => {
+      b.hidden = b.dataset.panel !== tab.getAttribute('aria-controls');
+    });
+  }
+  document.querySelector('[role="tablist"]').addEventListener('keydown', (e) => {
+    if (e.key !== 'ArrowRight' && e.key !== 'ArrowLeft') return;
+    const i = tabs.indexOf(document.activeElement);
+    if (i < 0) return;
+    const next = tabs[(i + (e.key === 'ArrowRight' ? 1 : tabs.length - 1)) % tabs.length];
+    next.focus();
+    selectTab(next);
+  });
+
+  function setScenario(name) {
+    document.querySelectorAll('[data-scn]').forEach((el) => { el.hidden = el.dataset.scn !== name; });
+    document.querySelectorAll('[data-scenario]').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.scenario === name)));
+  }
+})();
+</script>
+</body>
+</html>
