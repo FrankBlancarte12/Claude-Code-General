@@ -69,7 +69,7 @@ h1, h2, p { margin: 0; }
 .sb-bottom::before { content: ""; width: 40px; height: 1px; background: var(--n-500); }
 
 .topbar {
-  position: sticky; top: 0; z-index: 30; height: 56px;
+  position: sticky; top: env(safe-area-inset-top, 0px); z-index: 30; height: 56px;
   display: flex; align-items: center; gap: 16px; padding: 8px 48px;
   background: var(--glass); -webkit-backdrop-filter: saturate(180%) blur(20px); backdrop-filter: saturate(180%) blur(20px);
   border-bottom: 1px solid var(--n-300);
@@ -329,18 +329,18 @@ tbody tr:hover { background: rgba(255,255,255,.55); cursor: pointer; }
 }
 @media (max-width: 560px) {
   .topbar { padding: 8px 16px; gap: 8px; }
-  .content { padding: 16px 16px 112px; }
+  .content { padding: 16px 16px 152px; }
   .hero, .totals { padding: 16px; }
   .receipt { top: 14px; right: 16px; }
-  .mock { display: none; }
-  .actionbar { padding: 12px 16px calc(12px + env(safe-area-inset-bottom, 0px)); }
-  .bar-actions { flex: 1; }
+  .actionbar { flex-wrap: wrap; row-gap: 10px; padding: 10px 16px calc(12px + env(safe-area-inset-bottom, 0px)); }
+  .mock { flex: 1 1 100%; justify-content: space-between; }
+  .bar-actions { flex: 1 1 100%; }
   .bar-actions .btn { flex: 1; padding: 0 8px; }
   .uuid-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 2px 8px; }
   .uuid-row .k { font-size: 12px; line-height: 16px; }
   .uuid-row .uuid { grid-column: 1 / -1; grid-row: 2; margin-left: 0; font-size: 12.5px; }
   .uuid-row .tools { margin: -6px -6px -6px 0; }
-  .toast { bottom: 84px; }
+  .toast { bottom: 132px; }
 }
 @supports (interpolate-size: allow-keywords) {
   :root { interpolate-size: allow-keywords; }
@@ -657,7 +657,10 @@ tbody tr:hover { background: rgba(255,255,255,.55); cursor: pointer; }
     sel.addRange(range);
   };
 
+  document.documentElement.lang = 'es';
+
   document.addEventListener('click', (e) => {
+    if (e.target.closest('a[href="#"]')) e.preventDefault();
     const copyBtn = e.target.closest('[data-copy]');
     if (copyBtn) {
       const src = document.querySelector(copyBtn.dataset.copy);
