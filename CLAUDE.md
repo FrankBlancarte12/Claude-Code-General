@@ -1,6 +1,6 @@
 # Reglas de trabajo (Frank)
 
-Aplican a todo el trabajo en Wind, ManaShelf y cualquier otro proyecto donde construyas producto o código para Frank. La misma versión vive en la memoria de Notion ("Reglas de trabajo"); si cambian, actualiza ambas.
+Aplican a todo el trabajo en Wind, ManaShelf y cualquier otro proyecto donde construyas producto o código para Frank.
 
 ## Proceso
 
